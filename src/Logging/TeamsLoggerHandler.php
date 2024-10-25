@@ -2,8 +2,7 @@
 
 namespace Osama\LaravelTeamsNotification\Logging;
 
-use App\Models\User;
-use Monolog\Logger;
+use Monolog\Level;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\LogRecord;
 use Osama\LaravelTeamsNotification\TeamsNotification;
@@ -12,10 +11,11 @@ class TeamsLoggerHandler extends AbstractProcessingHandler
 {
 
     public $url;
+    public Level $level;
 
     protected $teamsNotification;
 
-    public function __construct($url, $level = Logger::DEBUG)
+    public function __construct($url, $level = Level::Debug)
     {
         parent::__construct($level);
         $this->teamsNotification = new TeamsNotification($url);

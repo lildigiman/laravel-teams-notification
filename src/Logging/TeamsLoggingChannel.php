@@ -13,6 +13,6 @@ class TeamsLoggingChannel
     public function __invoke(array $config)
     {
         throw_if(!isset($config['webhook_url']) && !isset($config['url']), new WebhookUrlIsNotDiscovered("Webhook URL Is Not Discovered"));
-        return new TeamsLogger( $config['webhook_url']??$config['url']);
+        return new TeamsLogger($config['webhook_url']??$config['url'], $config['level']);
     }
 }
