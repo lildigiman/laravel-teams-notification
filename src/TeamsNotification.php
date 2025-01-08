@@ -89,6 +89,45 @@ class TeamsNotification
         return $this->sendToTeams($card);
     }
 
+    private function getKeys()
+    {
+        $items = [];
+
+        foreach($this->additionalDetails as $key => $value){
+            $items[] = [
+                "type" => "TextBlock",
+                "text" => $key,
+                "weight" => "Bolder"
+            ];
+        }
+
+        return $items;
+    }
+
+    private function getValues()
+    {
+        $items = [];
+
+        foreach($this->additionalDetails as $key => $value){
+
+            if($key == 'exception'){
+                $items[] = [
+                    "type" => "TextBlock",
+                    "text" => "{$value->getFile()}({$value->getLine()})\n\n" . str_replace("\n", "\n\n", $value->getTraceAsString()),
+                    "wrap" => true
+                ];
+            } else {
+                $items[] = [
+                    "type" => "TextBlock",
+                    "text" => is_array($value) ? json_encode($value, JSON_PRETTY_PRINT) : $value,
+                    "wrap" => true
+                ];
+            }
+        }
+
+        return $items;
+    }
+
     // Method to build the adaptive card for a normal message with additional details
     protected function buildNormalMessageCard($message)
     {
@@ -98,45 +137,26 @@ class TeamsNotification
                 "size" => "Medium",
                 "weight" => "Bolder",
                 "color" => $this->color,
-                "text" => $message
+                "text" => $message,
+                "wrap" => true,
             ]
         ];
 
-        if (!empty($this->additionalDetails)) {
-            foreach ($this->additionalDetails as $key => $value) {
-                if($key == 'exception'){
-                    $body = array_merge($body, $this->formatExceptionText($value));
-                } else {
-                    $body[] = [
-                        "type" => "ColumnSet",
-                        "columns" => [
-                            [
-                                "type" => "Column",
-                                "items" => [
-                                    [
-                                        "type" => "TextBlock",
-                                        "text" => $key,
-                                        "weight" => "Bolder"
-                                    ]
-                                ],
-                                "width" => "auto"
-                            ],
-                            [
-                                "type" => "Column",
-                                "items" => [
-                                    [
-                                        "type" => "TextBlock",
-                                        "text" => is_array($value)?json_encode($value,JSON_PRETTY_PRINT):$value,
-                                        "wrap" => true
-                                    ]
-                                ],
-                                "width" => "stretch"
-                            ]
-                        ]
-                    ];
-                }
-            }
-        }
+        $body[] = [
+            "type" => "ColumnSet",
+            "columns" => [
+                [
+                    "type" => "Column",
+                    "items" => $this->getKeys(),
+                    "width" => "auto",
+                ],
+                [
+                    "type" => "Column",
+                    "items" => $this->getValues(),
+                    "width" => "stretch",
+                ],
+            ],
+        ];
 
         return [
             "type" => "message",
@@ -155,78 +175,6 @@ class TeamsNotification
                 ]
             ]
         ];
-    }
-
-    private function formatExceptionText($value)
-    {
-        $body[] = [
-            "type" => "ColumnSet",
-            "columns" => [
-                [
-                    "type" => "Column",
-                    "items" => [
-                        [
-                            "type" => "TextBlock",
-                            "text" => 'Message',
-                            "weight" => "Bolder"
-                        ]
-                    ],
-                    "width" => "auto"
-                ],
-                [
-                    "type" => "Column",
-                    "items" => [
-                        [
-                            "type" => "TextBlock",
-                            "text" => $value->getMessage(),
-                            "wrap" => true
-                        ]
-                    ],
-                    "width" => "stretch"
-                ],
-                [
-                    "type" => "Column",
-                    "items" => [
-                        [
-                            "type" => "TextBlock",
-                            "text" => $value->getFile(),
-                            "wrap" => true
-                        ]
-                    ],
-                    "width" => "stretch"
-                ],
-                [
-                    "type" => "Column",
-                    "items" => [
-                        [
-                            "type" => "TextBlock",
-                            "text" => $value->getLine(),
-                            "wrap" => true
-                        ]
-                    ],
-                    "width" => "stretch"
-                ]
-            ]
-        ];
-
-        $body[] = [
-            "type" => "ColumnSet",
-            "columns" => [
-                [
-                    "type" => "Column",
-                    "items" => [
-                        [
-                            "type" => "TextBlock",
-                            "text" => nl2br($value->getTraceAsString()),
-                            "wrap" => true
-                        ]
-                    ],
-                    "width" => "stretch"
-                ]
-            ]
-        ];
-            
-        return $body;
     }
 
     // Method to build the adaptive card for an exception message
