@@ -24,7 +24,9 @@ class TeamsNotification
     public function __construct($webhookUrl = null)
     {
         $this->webhookUrl = $webhookUrl ?: config('teams.webhook_url');
-        $this->client = new Client(); // Initialize Guzzle client
+        $this->client = new Client([
+            'verify' => config('teams.verify_ssl', true)
+        ]); // Initialize Guzzle client
     }
 
     // Method to set the color and allow chaining
@@ -189,72 +191,29 @@ class TeamsNotification
                 "color" => $this->color
             ],
             [
-                "type" => "ColumnSet",
-                "columns" => [
+                "type" => "FactSet",
+                "facts" => [
                     [
-                        "type" => "Column",
-                        "items" => [
-                            [
-                                "type" => "TextBlock",
-                                "text" => "Message:",
-                                "weight" => "Bolder"
-                            ],
-                            [
-                                "type" => "TextBlock",
-                                "text" => $this->exception->getMessage(),
-                                "wrap" => true
-                            ]
-                        ],
-                        "width" => "stretch"
+                        "title"=>"Message:",
+                        "value"=>$this->exception->getMessage(),
                     ],
                     [
-                        "type" => "Column",
-                        "items" => [
-                            [
-                                "type" => "TextBlock",
-                                "text" => "File:",
-                                "weight" => "Bolder"
-                            ],
-                            [
-                                "type" => "TextBlock",
-                                "text" => $this->exception->getFile(),
-                                "wrap" => true
-                            ]
-                        ],
-                        "width" => "stretch"
+                        "title"=>"File:",
+                        "value"=>$this->exception->getFile(),
                     ],
                     [
-                        "type" => "Column",
-                        "items" => [
-                            [
-                                "type" => "TextBlock",
-                                "text" => "Line:",
-                                "weight" => "Bolder"
-                            ],
-                            [
-                                "type" => "TextBlock",
-                                "text" => $this->exception->getLine(),
-                                "wrap" => true
-                            ]
-                        ],
-                        "width" => "stretch"
+                        "title"=>"Line:",
+                        "value"=>$this->exception->getLine(),
+                    ],
+                    [
+                        "title"=>"Trace:",
+                        "value"=> $this->includeTrace ? nl2br($this->exception->getTraceAsString()) : "",
                     ]
                 ]
             ]
+
         ];
 
-        if ($this->includeTrace) {
-            $body[] = [
-                "type" => "TextBlock",
-                "text" => "Trace:",
-                "weight" => "Bolder"
-            ];
-            $body[] = [
-                "type" => "TextBlock",
-                "text" => nl2br($this->exception->getTraceAsString()),
-                "wrap" => true
-            ];
-        }
 
         return [
             "type" => "message",
